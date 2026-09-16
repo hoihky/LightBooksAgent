@@ -2,6 +2,8 @@
 
 Local-first multi-agent platform for publishing technical articles about programming, game development, and game design.
 
+> **Disclaimer:** This project is an experimental, work-in-progress prototype built with the help of "vibe coding". Things will break. Features are currently missing, and the build scripts might not work at all. Please be aware that it may not be stable enough for production use now.
+
 ## Stack
 
 - **.NET 10** + **Blazor Server**
