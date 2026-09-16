@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LightBooksAgent — Documentation</title>
+  <meta name="description" content="Local-first multi-agent platform for publishing technical articles with Microsoft Agent Framework, Blazor, and local LLM inference.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/vendor/atom-one-dark.min.css">
+</head>
+<body>
+  <div class="site">
+    <header class="topbar">
+      <a href="index.html" class="brand">LightBooksAgent</a>
+      <nav class="topbar-nav" aria-label="Primary">
+        <a href="index.html" class="is-active">Overview</a>
+        <a href="plan.html">Plan</a>
+        <a href="system-design.html">System Design</a>
+        <a href="roadmap.html">Roadmap</a>
+      </nav>
+    </header>
+
+    <main class="portfolio-layout">
+      <div class="portfolio-main">
+        <section class="hero" id="top">
+          <div class="docs-hero-icon" aria-hidden="true">LB</div>
+          <div class="hero-text">
+            <h1>LightBooksAgent</h1>
+            <p class="hero-tagline">
+              A local-first, multi-agent platform for publishing technical articles about
+              programming, game development, and game design. Orchestrated with the
+              Microsoft Agent Framework, a Blazor Server UI, human-in-the-loop gates, and
+              llama.cpp for fully local LLM inference.
+            </p>
+            <div class="hero-links">
+              <a href="plan.html">Read the project plan →</a>
+              <a href="system-design.html">System design</a>
+              <a href="roadmap.html">Development roadmap</a>
+            </div>
+          </div>
+        </section>
+
+        <section id="documentation">
+          <h2 class="section-title">Documentation</h2>
+          <p class="section-lead">
+            Markdown sources live in <code>docs-src/</code> and are published as HTML via
+            <a href="https://github.com/hoihky/MDWeb" target="_blank" rel="noopener">MDWeb</a>.
+          </p>
+          <div class="project-grid">
+            <a href="plan.html" class="project-card">
+              <h3>Project Plan</h3>
+              <p>
+                Goals, publishing workflow, agent roles, memory system, MDWeb integration,
+                and Blazor UI features.
+              </p>
+            </a>
+            <a href="system-design.html" class="project-card">
+              <h3>System Design</h3>
+              <p>
+                Architecture layers, data model, MAF workflow with HITL RequestPort gates,
+                checkpoints, and real-time observability.
+              </p>
+            </a>
+            <a href="roadmap.html" class="project-card">
+              <h3>Development Roadmap</h3>
+              <p>
+                Phased delivery plan from foundation through writing pipeline, publishing,
+                MDWeb export, and operational polish.
+              </p>
+            </a>
+          </div>
+        </section>
+
+        <section id="highlights">
+          <h2 class="section-title">Highlights</h2>
+          <div class="feature-grid">
+            <article class="feature-card">
+              <h3>Human topic first</h3>
+              <p>Authors propose and confirm topics before agents research, outline, and write.</p>
+            </article>
+            <article class="feature-card">
+              <h3>MAF workflows</h3>
+              <p>Sequential orchestration with RequestPort HITL gates and JSON checkpoint resume.</p>
+            </article>
+            <article class="feature-card">
+              <h3>Local LLM</h3>
+              <p>OpenAI-compatible client pointed at llama.cpp — no cloud AI APIs required.</p>
+            </article>
+            <article class="feature-card">
+              <h3>Agent memory</h3>
+              <p>Episodic, semantic, and procedural memory distilled from feedback across articles.</p>
+            </article>
+            <article class="feature-card">
+              <h3>Blazor monitoring</h3>
+              <p>Dashboard, review queues, agent activity feed, and workflow controls.</p>
+            </article>
+            <article class="feature-card">
+              <h3>MDWeb export</h3>
+              <p>Optional Markdown and HTML publishing through the MDWeb static site generator.</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="quick-start">
+          <h2 class="section-title">Quick start</h2>
+          <pre><code class="language-bash">dotnet build
+dotnet run --project src/LightBooksAgent.Web</code></pre>
+          <p class="about-body">
+            Configure <code>LocalLlm.BaseUrl</code> in <code>appsettings.json</code> and ensure
+            llama.cpp is listening on the configured port. Confirm a topic in the UI, then start
+            the publishing workflow — it pauses at each human review gate until you approve.
+          </p>
+        </section>
+
+        <section id="regenerate">
+          <div class="cta-card">
+            <h3>Regenerate HTML docs</h3>
+            <p>
+              After editing Markdown under <code>docs-src/</code>, run
+              <code>./scripts/generate-docs.sh</code> from the repository root to rebuild the
+              HTML pages in <code>docs/</code>.
+            </p>
+          </div>
+        </section>
+
+        <footer class="site-footer">
+          <p>
+            <a href="plan.html">Plan</a>
+            · <a href="system-design.html">System Design</a>
+            · <a href="roadmap.html">Roadmap</a>
+          </p>
+        </footer>
+      </div>
+
+      <aside class="toc" aria-label="On this page">
+        <p class="toc-title">On this page</p>
+        <ul>
+          <li><a href="#documentation">Documentation</a></li>
+          <li><a href="#highlights">Highlights</a></li>
+          <li><a href="#quick-start">Quick start</a></li>
+          <li><a href="#regenerate">Regenerate</a></li>
+          <li><a href="plan.html">Project plan</a></li>
+          <li><a href="system-design.html">System design</a></li>
+          <li><a href="roadmap.html">Roadmap</a></li>
+        </ul>
+      </aside>
+    </main>
+  </div>
+  <script src="assets/vendor/highlight.min.js"></script>
+  <script src="assets/js/docs.js"></script>
+</body>
+</html>

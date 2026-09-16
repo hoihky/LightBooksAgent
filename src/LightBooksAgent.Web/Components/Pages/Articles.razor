@@ -1,0 +1,100 @@
+@page "/articles"
+@using LightBooksAgent.Core.Enums
+@using LightBooksAgent.Core.Interfaces
+@using LightBooksAgent.Core.Models
+@inject IArticleService ArticleService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Articles</PageTitle>
+
+<h2>Articles</h2>
+
+<section class="panel">
+    <h3>Create Article Project</h3>
+    <EditForm Model="_createForm" OnValidSubmit="CreateArticleAsync">
+        <div class="form-row">
+            <label>Title</label>
+            <InputText @bind-Value="_createForm.Title" />
+        </div>
+        <div class="form-row">
+            <label>Category</label>
+            <InputSelect @bind-Value="_createForm.Category">
+                @foreach (var category in Enum.GetValues<ArticleCategory>())
+                {
+                    <option value="@category">@category</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="form-row">
+            <label>Audience</label>
+            <InputText @bind-Value="_createForm.Audience" />
+        </div>
+        <div class="form-row">
+            <label>Keywords / seed URLs</label>
+            <InputTextArea @bind-Value="_createForm.SeedKeywords" />
+        </div>
+        <button type="submit">Create</button>
+    </EditForm>
+</section>
+
+<section class="panel">
+    <h3>Existing Articles</h3>
+    @if (_articles.Count == 0)
+    {
+        <p>No articles yet.</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Topic</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var article in _articles)
+                {
+                    <tr>
+                        <td><a href="@($"/articles/{article.Id}")">@article.Title</a></td>
+                        <td>@article.Category</td>
+                        <td>@article.Status</td>
+                        <td>@(article.ConfirmedTopic ?? "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+@code {
+    private readonly CreateArticleForm _createForm = new();
+    private IReadOnlyList<Core.Entities.ArticleProject> _articles = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _articles = await ArticleService.ListAsync();
+    }
+
+    private async Task CreateArticleAsync()
+    {
+        var article = await ArticleService.CreateAsync(
+            _createForm.Title,
+            _createForm.Category,
+            _createForm.Audience,
+            _createForm.SeedKeywords);
+
+        Navigation.NavigateTo($"/articles/{article.Id}");
+    }
+
+    private sealed class CreateArticleForm
+    {
+        public string Title { get; set; } = string.Empty;
+        public ArticleCategory Category { get; set; } = ArticleCategory.Programming;
+        public string Audience { get; set; } = "Intermediate developers";
+        public string SeedKeywords { get; set; } = string.Empty;
+    }
+}

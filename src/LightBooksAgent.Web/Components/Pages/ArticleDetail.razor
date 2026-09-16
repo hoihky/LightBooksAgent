@@ -1,0 +1,163 @@
+@page "/articles/{ArticleId:guid}"
+@using LightBooksAgent.Core.Interfaces
+@using LightBooksAgent.Core.Models
+@inject IArticleService ArticleService
+@inject IPublishingWorkflowRunner WorkflowRunner
+@inject IActivityLogger ActivityLogger
+@rendermode InteractiveServer
+
+<PageTitle>Article Workspace</PageTitle>
+
+@if (_article is null)
+{
+    <p>Article not found.</p>
+}
+else
+{
+    <h2>@_article.Title</h2>
+    <p>Category: @_article.Category | Status: @_article.Status</p>
+
+    <section class="panel">
+        <h3>1. Propose Topics (Human First)</h3>
+        <EditForm Model="_topicForm" OnValidSubmit="ProposeTopicsAsync">
+            <div class="form-row">
+                <label>Topic title</label>
+                <InputText @bind-Value="_topicForm.Title" />
+            </div>
+            <div class="form-row">
+                <label>Angle</label>
+                <InputText @bind-Value="_topicForm.Angle" />
+            </div>
+            <div class="form-row">
+                <label>Target reader</label>
+                <InputText @bind-Value="_topicForm.TargetReader" />
+            </div>
+            <button type="submit">Save Topic Proposal</button>
+        </EditForm>
+
+        @if (!string.IsNullOrWhiteSpace(_article.ProposedTopicsJson) && _article.ProposedTopicsJson != "[]")
+        {
+            <p>Proposed topics saved.</p>
+            <div class="form-row">
+                <label>Confirm topic</label>
+                <InputText @bind-Value="_confirmedTopic" />
+                <button @onclick="ConfirmTopicAsync">Confirm Topic</button>
+            </div>
+        }
+    </section>
+
+    <section class="panel">
+        <h3>2. Start Publishing Workflow</h3>
+        <p>Confirmed topic: @(_article.ConfirmedTopic ?? "Not confirmed yet")</p>
+        <button disabled="@string.IsNullOrWhiteSpace(_article.ConfirmedTopic)" @onclick="StartWorkflowAsync">
+            Start Agents
+        </button>
+        @if (_run is not null)
+        {
+            <p>Run status: @_run.AgentStatus | Step: @_run.CurrentStep | Agent: @(_run.CurrentAgentName ?? "—")</p>
+            <button @onclick="PauseRunAsync">Pause</button>
+            <button @onclick="StopRunAsync">Stop</button>
+            <button @onclick="ResumeRunAsync">Resume</button>
+        }
+    </section>
+
+    <section class="panel">
+        <h3>Activity History</h3>
+        @if (_activities.Count == 0)
+        {
+            <p>No activity yet.</p>
+        }
+        else
+        {
+            <ul class="activity-list">
+                @foreach (var activity in _activities)
+                {
+                    <li>
+                        <strong>@activity.Timestamp.ToLocalTime():t</strong>
+                        [@activity.AgentName] @activity.ActivityType — @activity.Message
+                        @if (!string.IsNullOrWhiteSpace(activity.Url))
+                        {
+                            <span> — <a href="@activity.Url" target="_blank">@activity.Url</a></span>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+}
+
+@code {
+    [Parameter] public Guid ArticleId { get; set; }
+
+    private Core.Entities.ArticleProject? _article;
+    private Core.Entities.PublishingRun? _run;
+    private IReadOnlyList<Core.Entities.AgentActivity> _activities = [];
+    private readonly TopicProposal _topicForm = new();
+    private string _confirmedTopic = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _article = await ArticleService.GetByIdAsync(ArticleId);
+        if (_article is null)
+        {
+            return;
+        }
+
+        _confirmedTopic = _article.ConfirmedTopic ?? string.Empty;
+        var runs = await WorkflowRunner.GetActiveRunsAsync();
+        _run = runs.FirstOrDefault(r => r.ArticleProjectId == ArticleId);
+        _activities = _run is null
+            ? []
+            : await ActivityLogger.GetRecentAsync(_run.Id, 100);
+    }
+
+    private async Task ProposeTopicsAsync()
+    {
+        await ArticleService.ProposeTopicsAsync(ArticleId, [_topicForm]);
+        await ReloadAsync();
+    }
+
+    private async Task ConfirmTopicAsync()
+    {
+        await ArticleService.ConfirmTopicAsync(ArticleId, _confirmedTopic);
+        await ReloadAsync();
+    }
+
+    private async Task StartWorkflowAsync()
+    {
+        _run = await WorkflowRunner.StartAsync(ArticleId);
+        await ReloadAsync();
+    }
+
+    private async Task PauseRunAsync()
+    {
+        if (_run is not null)
+        {
+            await WorkflowRunner.PauseAsync(_run.Id);
+            await ReloadAsync();
+        }
+    }
+
+    private async Task StopRunAsync()
+    {
+        if (_run is not null)
+        {
+            await WorkflowRunner.StopAsync(_run.Id);
+            await ReloadAsync();
+        }
+    }
+
+    private async Task ResumeRunAsync()
+    {
+        if (_run is not null)
+        {
+            await WorkflowRunner.ResumeAsync(_run.Id);
+            await ReloadAsync();
+        }
+    }
+}

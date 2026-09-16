@@ -1,0 +1,81 @@
+@page "/agents"
+@using LightBooksAgent.Core.Interfaces
+@inject IPublishingWorkflowRunner WorkflowRunner
+@inject IActivityLogger ActivityLogger
+@rendermode InteractiveServer
+
+<PageTitle>Agent Monitor</PageTitle>
+
+<h2>Agent Monitor</h2>
+
+@if (_activeRuns.Count == 0)
+{
+    <p>No active agent runs.</p>
+}
+else
+{
+    @foreach (var run in _activeRuns)
+    {
+        <section class="panel agent-card">
+            <h3>Run @run.Id.ToString()[..8]</h3>
+            <p>Step: @run.CurrentStep</p>
+            <p>Status: @run.AgentStatus</p>
+            <p>Current agent: @(run.CurrentAgentName ?? "—")</p>
+            <p>Activity: @(run.CurrentActivity ?? "—")</p>
+            <button @onclick="() => PauseAsync(run.Id)">Pause</button>
+            <button @onclick="() => StopAsync(run.Id)">Stop</button>
+            <button @onclick="() => ResumeAsync(run.Id)">Resume</button>
+        </section>
+    }
+}
+
+<section class="panel">
+    <h3>Recent Activity</h3>
+    <ul class="activity-list">
+        @foreach (var activity in _recentActivity)
+        {
+            <li>
+                <strong>@activity.Timestamp.ToLocalTime():t</strong>
+                [@activity.AgentName] @activity.ActivityType — @activity.Message
+                @if (!string.IsNullOrWhiteSpace(activity.Url))
+                {
+                    <span> — <a href="@activity.Url" target="_blank">source</a></span>
+                }
+            </li>
+        }
+    </ul>
+</section>
+
+@code {
+    private IReadOnlyList<Core.Entities.PublishingRun> _activeRuns = [];
+    private IReadOnlyList<Core.Entities.AgentActivity> _recentActivity = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _activeRuns = await WorkflowRunner.GetActiveRunsAsync();
+        _recentActivity = await ActivityLogger.GetRecentAsync(limit: 50);
+    }
+
+    private async Task PauseAsync(Guid runId)
+    {
+        await WorkflowRunner.PauseAsync(runId);
+        await ReloadAsync();
+    }
+
+    private async Task StopAsync(Guid runId)
+    {
+        await WorkflowRunner.StopAsync(runId);
+        await ReloadAsync();
+    }
+
+    private async Task ResumeAsync(Guid runId)
+    {
+        await WorkflowRunner.ResumeAsync(runId);
+        await ReloadAsync();
+    }
+}

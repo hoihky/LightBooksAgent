@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Plan · LightBooksAgent Documentation</title>
+  <meta name="description" content="LightBooksAgent project documentation">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/vendor/atom-one-dark.min.css">
+</head>
+<body>
+  <div class="site">
+    <header class="topbar">
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">☰</button>
+      <a href="index.html" class="brand">LightBooksAgent Documentation</a>
+      <div class="search-wrap">
+        <input type="search" id="search" placeholder="Search docs…" autocomplete="off">
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar" id="sidebar">
+        <nav class="nav" aria-label="Documentation">
+          <ul class="nav-list">
+            
+                        <li class="nav-item depth-0 is-active">
+                          
+                            <a href="plan.html" class="nav-link">Project Plan</a>
+                            
+                        </li>
+                        
+                        <li class="nav-item depth-0">
+                          
+                            <a href="system-design.html" class="nav-link">System Design</a>
+                            
+                        </li>
+                        
+                        <li class="nav-item depth-0">
+                          
+                            <a href="roadmap.html" class="nav-link">Development Roadmap</a>
+                            
+                        </li>
+                        
+          </ul>
+        </nav>
+      </aside>
+
+      <main class="content">
+        <article class="doc">
+          <header class="doc-header">
+            <h1>Project Plan</h1>
+          </header>
+          <div class="doc-body"><h1 id="lightbooksagent-project-plan">LightBooksAgent — Project Plan</h1>
+<p>A local-first, multi-agent platform for publishing technical articles about programming, game development, and game design. Built with <strong>C# Microsoft Agent Framework</strong>, <strong>Blazor Server</strong>, and a <strong>local llama.cpp</strong> LLM at <code>http://localhost:9931/v1</code>.</p>
+<hr />
+<h2 id="goals">Goals</h2>
+<table class="table">
+<thead>
+<tr>
+<th>Goal</th>
+<th>Approach</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Learn C# AI agents practically</td>
+<td>Microsoft Agent Framework: agents, tools, workflows, checkpoints, HITL</td>
+</tr>
+<tr>
+<td>Publish technical articles</td>
+<td>End-to-end pipeline from human topic proposal → research → writing → review → export</td>
+</tr>
+<tr>
+<td>Stay local</td>
+<td>All LLM inference via llama.cpp; no cloud AI APIs</td>
+</tr>
+<tr>
+<td>Human control</td>
+<td>Mandatory approval gates at topic confirmation, outline, draft, and publish</td>
+</tr>
+<tr>
+<td>Observability</td>
+<td>Blazor UI with live agent status, activity history, start/stop controls</td>
+</tr>
+<tr>
+<td>Continuous improvement</td>
+<td>Agent memory system — agents learn from past articles and feedback</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="publishing-workflow">Publishing Workflow</h2>
+<p>The pipeline is a <strong>state machine</strong> orchestrated by MAF sequential workflows with <strong>Human-in-the-Loop (HITL)</strong> gates.</p>
+<pre class="mermaid">stateDiagram-v2
+    [*] --> ProjectCreated: Human creates article project
+
+    ProjectCreated --> TopicProposed: Human proposes topic(s)
+    TopicProposed --> TopicConfirmed: Human confirms final topic
+
+    TopicConfirmed --> Researching: Research Agent runs
+    Researching --> ResearchReview: Research brief ready
+
+    ResearchReview --> ResearchApproved: Human approves research
+    ResearchReview --> Researching: Human requests more research
+
+    ResearchApproved --> Outlining: Outline Agent
+    Outlining --> OutlineReview: Outline ready
+
+    OutlineReview --> OutlineApproved: Human approves outline
+    OutlineReview --> Outlining: Human requests changes
+
+    OutlineApproved --> Writing: Writer Agent
+    Writing --> AutoReview: Draft complete
+
+    AutoReview --> TechReview: Technical Reviewer Agent
+    TechReview --> EditorialReview: Editor Agent
+    EditorialReview --> HumanDraftReview: Auto-review done
+
+    HumanDraftReview --> Revision: Human requests changes
+    Revision --> Writing: Writer revises
+    HumanDraftReview --> FinalApproval: Human accepts draft
+
+    FinalApproval --> Publishing: Publisher exports Markdown
+    Publishing --> HtmlExport: Optional MDWeb HTML export
+    HtmlExport --> Published: Human confirms
+    Publishing --> Published: Skip HTML
+
+    Published --> MemoryUpdate: Store learnings in agent memory
+    MemoryUpdate --> [*]
+</pre>
+<h3 id="step-by-step">Step-by-step</h3>
+<table class="table">
+<thead>
+<tr>
+<th>#</th>
+<th>Step</th>
+<th>Actor</th>
+<th>Output</th>
+<th>HITL?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Create project</strong></td>
+<td>Human (UI)</td>
+<td>Title, category, audience, seed keywords</td>
+<td>—</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Propose topic</strong></td>
+<td>Human (UI)</td>
+<td>1–3 topic ideas with angle and target reader</td>
+<td>—</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Confirm topic</strong></td>
+<td>Human (UI)</td>
+<td>Selected topic locked for pipeline</td>
+<td><strong>Required</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Research</strong></td>
+<td>Research Agent</td>
+<td>Summaries, key quotes, bibliography with URLs, relevance scores</td>
+<td>—</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Research review</strong></td>
+<td>Human (UI)</td>
+<td>Approve research or request more sources</td>
+<td><strong>Required</strong></td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Outline</strong></td>
+<td>Outline Architect Agent</td>
+<td>H2/H3 structure, learning objectives, code-example slots</td>
+<td>—</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Outline review</strong></td>
+<td>Human (UI)</td>
+<td>Approve or comment on outline</td>
+<td><strong>Required</strong></td>
+</tr>
+<tr>
+<td>8</td>
+<td><strong>Draft writing</strong></td>
+<td>Writer Agent</td>
+<td>Full article in Markdown (category-specific prompt)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>Technical review</strong></td>
+<td>Technical Reviewer Agent</td>
+<td>Accuracy notes, code fixes, missing concepts</td>
+<td>—</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>Editorial review</strong></td>
+<td>Editor Agent</td>
+<td>Clarity, tone, structure suggestions</td>
+<td>—</td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>Critical human review</strong></td>
+<td>Human (UI)</td>
+<td>Accept / request revision with comments</td>
+<td><strong>Required</strong></td>
+</tr>
+<tr>
+<td>12</td>
+<td><strong>Revision loop</strong></td>
+<td>Writer Agent</td>
+<td>Revised draft (max N iterations, configurable)</td>
+<td>Optional re-review</td>
+</tr>
+<tr>
+<td>13</td>
+<td><strong>Final approval</strong></td>
+<td>Human (UI)</td>
+<td>Approve for publish or archive</td>
+<td><strong>Required</strong></td>
+</tr>
+<tr>
+<td>14</td>
+<td><strong>Publish</strong></td>
+<td>Publisher</td>
+<td>Export <code>.md</code> + frontmatter YAML to <code>articles/</code></td>
+<td><strong>Required</strong></td>
+</tr>
+<tr>
+<td>15</td>
+<td><strong>HTML export</strong> (optional)</td>
+<td>MDWeb integration</td>
+<td>Static HTML site via <a href="../MDWeb">MDWeb</a></td>
+<td>Human opts in</td>
+</tr>
+<tr>
+<td>16</td>
+<td><strong>Memory update</strong></td>
+<td>Memory Service</td>
+<td>Store article outcomes, feedback, and lessons for future runs</td>
+<td>Automatic</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-workflow-change">Key workflow change</h3>
+<p><strong>Human proposes topics first</strong>, then agents research the confirmed topic. This keeps you in control of editorial direction while agents handle depth and synthesis.</p>
+<hr />
+<h2 id="agents">Agents</h2>
+<table class="table">
+<thead>
+<tr>
+<th>Agent</th>
+<th>Role</th>
+<th>Key tools</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Research Agent</strong></td>
+<td>Fetch URLs, summarize sources, build research brief</td>
+<td><code>FetchUrl</code>, <code>SaveResearchNote</code>, <code>QueryMemory</code></td>
+</tr>
+<tr>
+<td><strong>Outline Architect</strong></td>
+<td>Structure article before writing</td>
+<td><code>ReadResearchBrief</code>, <code>GenerateOutline</code>, <code>QueryMemory</code></td>
+</tr>
+<tr>
+<td><strong>Writer Agent</strong></td>
+<td>Produce Markdown draft (Programming / GameDev / GameDesign prompts)</td>
+<td><code>ReadOutline</code>, <code>WriteSection</code>, <code>QueryMemory</code></td>
+</tr>
+<tr>
+<td><strong>Technical Reviewer</strong></td>
+<td>Check accuracy and completeness</td>
+<td><code>ReadDraft</code>, <code>AnnotateIssue</code>, <code>QueryMemory</code></td>
+</tr>
+<tr>
+<td><strong>Editor Agent</strong></td>
+<td>Improve clarity and flow</td>
+<td><code>ReadDraft</code>, <code>ApplyEdits</code>, <code>QueryMemory</code></td>
+</tr>
+<tr>
+<td><strong>Publisher</strong></td>
+<td>Export Markdown; optionally invoke MDWeb for HTML</td>
+<td><code>ExportMarkdown</code>, <code>GenerateHtmlViaMdWeb</code></td>
+</tr>
+</tbody>
+</table>
+<p>The <strong>Orchestrator</strong> is a MAF workflow (not a chat agent) that sequences the above with HITL gates.</p>
+<hr />
+<h2 id="agent-memory-system">Agent Memory System</h2>
+<p>Agents learn from past experience through a layered memory model:</p>
+<h3 id="memory-layers">Memory layers</h3>
+<table class="table">
+<thead>
+<tr>
+<th>Layer</th>
+<th>Scope</th>
+<th>Contents</th>
+<th>Retrieval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Episodic</strong></td>
+<td>Per article run</td>
+<td>Research notes, drafts, human feedback, approval/rejection reasons</td>
+<td>By <code>ArticleProjectId</code></td>
+</tr>
+<tr>
+<td><strong>Semantic</strong></td>
+<td>Cross-article</td>
+<td>Distilled lessons: &quot;avoid X pattern&quot;, &quot;readers prefer Y structure&quot;</td>
+<td>Vector similarity (local embeddings via llama.cpp <code>/v1/embeddings</code>)</td>
+</tr>
+<tr>
+<td><strong>Procedural</strong></td>
+<td>Per agent role</td>
+<td>Successful prompt patterns, tool usage stats, revision strategies</td>
+<td>By agent name + category</td>
+</tr>
+</tbody>
+</table>
+<h3 id="memory-lifecycle">Memory lifecycle</h3>
+<ol>
+<li><strong>Before agent run</strong> — <code>IMemoryService.RetrieveContextAsync(agentName, category, topic)</code> injects relevant memories into the agent system prompt.</li>
+<li><strong>During run</strong> — Agents call <code>SaveObservation</code> tool for notable findings.</li>
+<li><strong>After human review</strong> — Feedback is stored as episodic memory and distilled into semantic memory entries.</li>
+<li><strong>After publish</strong> — A <strong>Reflection Agent</strong> (lightweight, post-pipeline) summarizes what worked and what to improve; stored for future runs.</li>
+</ol>
+<h3 id="storage">Storage</h3>
+<ul>
+<li>SQLite tables: <code>AgentMemoryEntry</code>, <code>MemoryEmbedding</code> (blob), <code>MemoryReflection</code></li>
+<li>Embeddings generated locally via llama.cpp — no external vector DB required for MVP</li>
+</ul>
+<hr />
+<h2 id="mdweb-integration-optional-html-export">MDWeb Integration (Optional HTML Export)</h2>
+<p>After Markdown export, the user can optionally generate HTML using <a href="../MDWeb">MDWeb</a>:</p>
+<ul>
+<li><strong>Default theme</strong> — documentation-style static site</li>
+<li><strong>WeChat theme</strong> — inline-styled HTML for 微信公众号</li>
+</ul>
+<p>Integration via project reference to <code>MDWeb.Application</code> and <code>MDWeb.Infrastructure</code>, using <code>ISiteGenerator</code> programmatically. Configuration in <code>appsettings.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;MdWeb&quot;: {
+    &quot;ProjectPath&quot;: &quot;../MDWeb&quot;,
+    &quot;DefaultTheme&quot;: &quot;themes/default&quot;,
+    &quot;WeChatTheme&quot;: &quot;themes/wechat&quot;
+  }
+}
+</code></pre>
+<hr />
+<h2 id="blazor-ui-features">Blazor UI Features</h2>
+<table class="table">
+<thead>
+<tr>
+<th>Page</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Dashboard</strong></td>
+<td>Active runs, pending HITL count, agent status summary, recent activity</td>
+</tr>
+<tr>
+<td><strong>Articles</strong></td>
+<td>List/create article projects</td>
+</tr>
+<tr>
+<td><strong>Article Workspace</strong></td>
+<td>Workflow timeline, research materials, draft versions, side-by-side review</td>
+</tr>
+<tr>
+<td><strong>Review Queue</strong></td>
+<td>Pending HITL approvals with approve/reject/comment</td>
+</tr>
+<tr>
+<td><strong>Agent Monitor</strong></td>
+<td>Per-agent status, current activity, start/stop/pause, URL research table</td>
+</tr>
+<tr>
+<td><strong>Activity Feed</strong></td>
+<td>Real-time SignalR stream, filterable by agent/article</td>
+</tr>
+<tr>
+<td><strong>Memory Explorer</strong></td>
+<td>Browse agent memories, episodic history, semantic lessons</td>
+</tr>
+<tr>
+<td><strong>Settings</strong></td>
+<td>LLM endpoint, MDWeb paths, revision limits, URL allowlist</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="constraints">Constraints</h2>
+<ul>
+<li><strong>LLM</strong>: Strictly local at <code>http://localhost:9931/v1</code> (OpenAI-compatible API)</li>
+<li><strong>Research URLs</strong>: HTTP fetch allowed; optional domain allowlist</li>
+<li><strong>No cloud AI</strong>: No Azure OpenAI, OpenAI, Anthropic, or similar remote model APIs</li>
+<li><strong>Storage</strong>: SQLite for metadata; file system for Markdown/HTML artifacts</li>
+</ul>
+<hr />
+<h2 id="article-categories">Article Categories</h2>
+<ul>
+<li>Programming</li>
+<li>Game Development</li>
+<li>Game Design</li>
+</ul>
+<p>Each category has a dedicated Writer Agent prompt template and memory partition.</p>
+</div>
+          <footer class="doc-footer">
+            <p><a href="index.html">← Documentation overview</a></p>
+          </footer>
+        </article>
+
+        
+                <aside class="toc" aria-label="On this page">
+                  <p class="toc-title">On this page</p>
+                  <ul>
+                    
+                        <li class="toc-h1">
+                          <a href="#lightbooksagent-project-plan">LightBooksAgent — Project Plan</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#goals">Goals</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#publishing-workflow">Publishing Workflow</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#step-by-step">Step-by-step</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#key-workflow-change">Key workflow change</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#agents">Agents</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#agent-memory-system">Agent Memory System</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#memory-layers">Memory layers</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#memory-lifecycle">Memory lifecycle</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#storage">Storage</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#mdweb-integration-optional-html-export">MDWeb Integration (Optional HTML Export)</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#blazor-ui-features">Blazor UI Features</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#constraints">Constraints</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#article-categories">Article Categories</a>
+                        </li>
+                        
+                  </ul>
+                </aside>
+                
+      </main>
+    </div>
+  </div>
+  <script src="assets/vendor/mermaid.min.js"></script>
+  <script src="assets/vendor/highlight.min.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

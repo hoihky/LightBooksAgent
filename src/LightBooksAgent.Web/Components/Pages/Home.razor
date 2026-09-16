@@ -1,0 +1,73 @@
+﻿@page "/"
+@using LightBooksAgent.Core.Interfaces
+@using LightBooksAgent.Core.Models
+@inject ILocalLlmClient LlmClient
+@inject IPublishingWorkflowRunner WorkflowRunner
+@inject IHitlService HitlService
+@rendermode InteractiveServer
+
+<PageTitle>Dashboard</PageTitle>
+
+<h2>Dashboard</h2>
+
+<section class="panel">
+    <h3>Local LLM Status</h3>
+    @if (_llmStatus is null)
+    {
+        <p>Checking local LLM...</p>
+    }
+    else if (_llmStatus.IsHealthy)
+    {
+        <p class="status-ok">Connected — @(_llmStatus.ModelName ?? "local model")</p>
+    }
+    else
+    {
+        <p class="status-error">Unavailable — @_llmStatus.Message</p>
+    }
+</section>
+
+<section class="panel">
+    <h3>Active Runs</h3>
+    @if (_activeRuns.Count == 0)
+    {
+        <p>No active publishing runs.</p>
+    }
+    else
+    {
+        <ul>
+            @foreach (var run in _activeRuns)
+            {
+                <li>
+                    <a href="@($"/articles/{run.ArticleProjectId}")">
+                        Run @run.Id.ToString()[..8] — @run.CurrentStep — @run.AgentStatus
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+</section>
+
+<section class="panel">
+    <h3>Pending Reviews</h3>
+    @if (_pendingReviews.Count == 0)
+    {
+        <p>No reviews waiting.</p>
+    }
+    else
+    {
+        <p>@_pendingReviews.Count review(s) need your attention. <a href="/reviews">Open queue</a></p>
+    }
+</section>
+
+@code {
+    private LlmHealthStatus? _llmStatus;
+    private IReadOnlyList<Core.Entities.PublishingRun> _activeRuns = [];
+    private IReadOnlyList<Core.Entities.ReviewRequest> _pendingReviews = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _llmStatus = await LlmClient.CheckHealthAsync();
+        _activeRuns = await WorkflowRunner.GetActiveRunsAsync();
+        _pendingReviews = await HitlService.GetPendingAsync();
+    }
+}

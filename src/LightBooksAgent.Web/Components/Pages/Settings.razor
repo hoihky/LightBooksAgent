@@ -1,0 +1,47 @@
+@page "/settings"
+@using LightBooksAgent.Core.Interfaces
+@using LightBooksAgent.Core.Models
+@using LightBooksAgent.Core.Options
+@using Microsoft.Extensions.Options
+@inject IOptions<LocalLlmOptions> LlmOptions
+@inject IOptions<MdWebOptions> MdWebOptions
+@inject IOptions<PublishingOptions> PublishingOptions
+@inject ILocalLlmClient LlmClient
+@rendermode InteractiveServer
+
+<PageTitle>Settings</PageTitle>
+
+<h2>Settings</h2>
+
+<section class="panel">
+    <h3>Local LLM</h3>
+    <p>Base URL: @LlmOptions.Value.BaseUrl</p>
+    <p>Model: @LlmOptions.Value.Model</p>
+    <p>Embedding model: @LlmOptions.Value.EmbeddingModel</p>
+    @if (_health is not null)
+    {
+        <p>Status: @(_health.IsHealthy ? "Healthy" : "Unavailable") — @_health.Message</p>
+    }
+</section>
+
+<section class="panel">
+    <h3>MDWeb</h3>
+    <p>Project path: @MdWebOptions.Value.ProjectPath</p>
+    <p>Default theme: @MdWebOptions.Value.DefaultTheme</p>
+    <p>WeChat theme: @MdWebOptions.Value.WeChatTheme</p>
+</section>
+
+<section class="panel">
+    <h3>Publishing</h3>
+    <p>Max revision loops: @PublishingOptions.Value.MaxRevisionLoops</p>
+    <p>Articles path: @PublishingOptions.Value.ArticlesPath</p>
+</section>
+
+@code {
+    private LlmHealthStatus? _health;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _health = await LlmClient.CheckHealthAsync();
+    }
+}

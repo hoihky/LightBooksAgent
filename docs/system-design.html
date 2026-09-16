@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>System Design · LightBooksAgent Documentation</title>
+  <meta name="description" content="LightBooksAgent project documentation">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/vendor/atom-one-dark.min.css">
+</head>
+<body>
+  <div class="site">
+    <header class="topbar">
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">☰</button>
+      <a href="index.html" class="brand">LightBooksAgent Documentation</a>
+      <div class="search-wrap">
+        <input type="search" id="search" placeholder="Search docs…" autocomplete="off">
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar" id="sidebar">
+        <nav class="nav" aria-label="Documentation">
+          <ul class="nav-list">
+            
+                        <li class="nav-item depth-0">
+                          
+                            <a href="plan.html" class="nav-link">Project Plan</a>
+                            
+                        </li>
+                        
+                        <li class="nav-item depth-0 is-active">
+                          
+                            <a href="system-design.html" class="nav-link">System Design</a>
+                            
+                        </li>
+                        
+                        <li class="nav-item depth-0">
+                          
+                            <a href="roadmap.html" class="nav-link">Development Roadmap</a>
+                            
+                        </li>
+                        
+          </ul>
+        </nav>
+      </aside>
+
+      <main class="content">
+        <article class="doc">
+          <header class="doc-header">
+            <h1>System Design</h1>
+          </header>
+          <div class="doc-body"><h1 id="lightbooksagent-system-design">LightBooksAgent — System Design</h1>
+<h2 id="architecture-overview">1. Architecture Overview</h2>
+<pre class="mermaid">flowchart TB
+    subgraph UI["Blazor Server UI"]
+        Dashboard
+        ArticleWorkspace
+        ReviewQueue
+        AgentMonitor
+        ActivityFeed
+        MemoryExplorer
+    end
+
+    subgraph App["Application Layer"]
+        WorkflowOrchestrator
+        HitlService
+        AgentControlService
+        ActivityLogger
+        MemoryService
+        PublishingService
+    end
+
+    subgraph Agents["MAF Agents Layer"]
+        ResearchAgent
+        OutlineAgent
+        WriterAgent
+        TechReviewerAgent
+        EditorAgent
+        ReflectionAgent
+    end
+
+    subgraph Workflows["MAF Workflows"]
+        PublishingWorkflow
+        HitlExecutors
+        CheckpointManager
+    end
+
+    subgraph Infra["Infrastructure"]
+        LlamaCppClient["OpenAI client → localhost:9931/v1"]
+        EmbeddingClient["Embeddings → localhost:9931/v1/embeddings"]
+        SQLite[(SQLite DB)]
+        FileStore["articles/ + exports/"]
+        UrlFetcher[HTTP URL Fetcher]
+        MdWebPublisher["MDWeb ISiteGenerator"]
+    end
+
+    UI &lt;-->|SignalR + DI| App
+    App --> Workflows
+    Workflows --> Agents
+    Agents --> LlamaCppClient
+    Agents --> MemoryService
+    MemoryService --> EmbeddingClient
+    MemoryService --> SQLite
+    App --> SQLite
+    App --> FileStore
+    Agents --> UrlFetcher
+    PublishingService --> MdWebPublisher
+    PublishingService --> FileStore
+</pre>
+<hr />
+<h2 id="solution-structure">2. Solution Structure</h2>
+<pre><code>LightBooksAgent/
+├── docs/
+│   ├── plan.md
+│   ├── system-design.md
+│   └── roadmap.md
+├── src/
+│   ├── LightBooksAgent.Web/           # Blazor Server host, SignalR hubs, pages
+│   ├── LightBooksAgent.Core/          # Domain entities, enums, interfaces
+│   ├── LightBooksAgent.Application/   # Services, orchestration, HITL, memory
+│   ├── LightBooksAgent.Agents/        # MAF agent definitions, prompts, tools
+│   ├── LightBooksAgent.Workflows/     # MAF workflow graphs, HITL executors
+│   └── LightBooksAgent.Infrastructure/ # EF Core, SQLite, LLM, MDWeb, URL fetch
+├── tests/
+│   └── LightBooksAgent.Core.Tests/
+├── articles/                          # Published Markdown (gitignored content)
+├── exports/                           # HTML exports (gitignored)
+└── data/                              # SQLite database (gitignored)
+</code></pre>
+<hr />
+<h2 id="layer-responsibilities">3. Layer Responsibilities</h2>
+<h3 id="lightbooksagent.core">3.1 LightBooksAgent.Core</h3>
+<p>Pure domain — no external dependencies.</p>
+<ul>
+<li><strong>Entities</strong>: <code>ArticleProject</code>, <code>PublishingRun</code>, <code>AgentActivity</code>, <code>ResearchMaterial</code>, <code>ArticleVersion</code>, <code>ReviewRequest</code>, <code>AgentMemoryEntry</code></li>
+<li><strong>Enums</strong>: <code>ArticleCategory</code>, <code>PublishingStep</code>, <code>AgentStatus</code>, <code>ReviewGateType</code>, <code>MemoryLayer</code></li>
+<li><strong>Interfaces</strong>: <code>IMemoryService</code>, <code>IActivityLogger</code>, <code>IHitlService</code>, <code>ILocalLlmClient</code>, <code>IMdWebPublisher</code>, <code>IPublishingWorkflowRunner</code></li>
+</ul>
+<h3 id="lightbooksagent.application">3.2 LightBooksAgent.Application</h3>
+<p>Business logic and orchestration.</p>
+<ul>
+<li><code>PublishingWorkflowService</code> — start/pause/stop/resume runs</li>
+<li><code>HitlService</code> — create review requests, process human responses, resume MAF workflow</li>
+<li><code>AgentControlService</code> — cancellation tokens, agent status tracking</li>
+<li><code>ActivityService</code> — persist and broadcast agent activities</li>
+<li><code>MemoryService</code> — store/retrieve/distill agent memories</li>
+<li><code>ArticleService</code> — CRUD for article projects and versions</li>
+</ul>
+<h3 id="lightbooksagent.agents">3.3 LightBooksAgent.Agents</h3>
+<p>MAF agent factory and tool definitions.</p>
+<ul>
+<li><code>AgentFactory</code> — creates configured <code>AIAgent</code> instances with local LLM</li>
+<li>Per-agent system prompts (in <code>Prompts/</code>)</li>
+<li>Tools: <code>FetchUrlTool</code>, <code>SaveResearchNoteTool</code>, <code>QueryMemoryTool</code>, <code>SaveObservationTool</code></li>
+<li><code>AgentActivityMiddleware</code> — logs every invocation to <code>IActivityLogger</code></li>
+</ul>
+<h3 id="lightbooksagent.workflows">3.4 LightBooksAgent.Workflows</h3>
+<p>MAF workflow definitions.</p>
+<pre><code>TopicConfirmed → Research → [HITL: ResearchApproval]
+→ Outline → [HITL: OutlineApproval]
+→ Write → TechReview → Edit
+→ [HITL: DraftReview] → (optional Revision loop)
+→ [HITL: FinalApproval]
+→ Publish → (optional MDWeb HTML)
+→ MemoryUpdate
+</code></pre>
+<ul>
+<li>Uses MAF <strong>sequential orchestration</strong> with custom <strong>RequestPort</strong> executors at HITL gates</li>
+<li><strong>CheckpointManager</strong> backed by SQLite for pause/resume across app restarts</li>
+</ul>
+<h3 id="lightbooksagent.infrastructure">3.5 LightBooksAgent.Infrastructure</h3>
+<p>External integrations.</p>
+<table class="table">
+<thead>
+<tr>
+<th>Component</th>
+<th>Implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM chat</td>
+<td><code>OpenAIClient</code> with <code>Endpoint = http://localhost:9931/v1</code></td>
+</tr>
+<tr>
+<td>Embeddings</td>
+<td><code>POST /v1/embeddings</code> on same endpoint</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>EF Core + SQLite (<code>data/lightbooks.db</code>)</td>
+</tr>
+<tr>
+<td>URL fetch</td>
+<td><code>HttpClient</code> with timeout and optional allowlist</td>
+</tr>
+<tr>
+<td>MDWeb</td>
+<td>Project refs to <code>MDWeb.Application</code> + <code>MDWeb.Infrastructure</code>; <code>MdWebPublisher</code> wraps <code>ISiteGenerator</code></td>
+</tr>
+<tr>
+<td>Checkpoints</td>
+<td><code>SqliteCheckpointManager</code> implementing MAF checkpoint persistence</td>
+</tr>
+</tbody>
+</table>
+<h3 id="lightbooksagent.web">3.6 LightBooksAgent.Web</h3>
+<p>Blazor Server application.</p>
+<ul>
+<li><strong>SignalR hubs</strong>: <code>ActivityHub</code>, <code>WorkflowHub</code></li>
+<li><strong>Pages</strong>: Dashboard, Articles, Article detail, Review queue, Agent monitor, Memory explorer, Settings</li>
+<li><strong>Components</strong>: <code>WorkflowStepper</code>, <code>ActivityFeed</code>, <code>AgentStatusCard</code>, <code>ReviewPanel</code>, <code>ResearchUrlList</code></li>
+</ul>
+<hr />
+<h2 id="data-model">4. Data Model</h2>
+<pre class="mermaid">erDiagram
+    ArticleProject ||--o{ PublishingRun : has
+    ArticleProject ||--o{ ArticleVersion : has
+    PublishingRun ||--o{ AgentActivity : logs
+    PublishingRun ||--o{ ResearchMaterial : collects
+    PublishingRun ||--o{ ReviewRequest : gates
+    ArticleProject ||--o{ AgentMemoryEntry : memories
+
+    ArticleProject {
+        guid Id PK
+        string Title
+        string Category
+        string Status
+        string ProposedTopicsJson
+        string ConfirmedTopic
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    PublishingRun {
+        guid Id PK
+        guid ArticleProjectId FK
+        string WorkflowRunId
+        string CurrentStep
+        string CheckpointId
+        string AgentStatus
+        datetime StartedAt
+        datetime CompletedAt
+    }
+
+    AgentActivity {
+        guid Id PK
+        guid PublishingRunId FK
+        string AgentName
+        string ActivityType
+        string Message
+        string Url
+        int DurationMs
+        datetime Timestamp
+    }
+
+    ResearchMaterial {
+        guid Id PK
+        guid PublishingRunId FK
+        string Url
+        string Title
+        string Summary
+        datetime FetchedAt
+    }
+
+    ArticleVersion {
+        guid Id PK
+        guid ArticleProjectId FK
+        int VersionNumber
+        string ContentMarkdown
+        string CreatedBy
+        datetime CreatedAt
+    }
+
+    ReviewRequest {
+        guid Id PK
+        guid PublishingRunId FK
+        string GateType
+        string PayloadJson
+        string Status
+        string HumanComment
+        datetime CreatedAt
+        datetime ResolvedAt
+    }
+
+    AgentMemoryEntry {
+        guid Id PK
+        guid ArticleProjectId FK
+        string AgentName
+        string Layer
+        string Category
+        string Content
+        blob Embedding
+        float Importance
+        datetime CreatedAt
+    }
+</pre>
+<hr />
+<h2 id="maf-workflow-hitl-design">5. MAF Workflow + HITL Design</h2>
+<h3 id="hitl-gate-types">HITL gate types</h3>
+<table class="table">
+<thead>
+<tr>
+<th>Gate</th>
+<th>Trigger</th>
+<th>Human action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TopicConfirmation</code></td>
+<td>After human proposes topics</td>
+<td>Select/confirm one topic</td>
+</tr>
+<tr>
+<td><code>ResearchApproval</code></td>
+<td>Research Agent completes</td>
+<td>Approve brief or request more research</td>
+</tr>
+<tr>
+<td><code>OutlineApproval</code></td>
+<td>Outline Agent completes</td>
+<td>Approve or comment</td>
+</tr>
+<tr>
+<td><code>DraftReview</code></td>
+<td>Auto-review completes</td>
+<td>Accept or request revision</td>
+</tr>
+<tr>
+<td><code>FinalApproval</code></td>
+<td>Draft accepted</td>
+<td>Approve for publish</td>
+</tr>
+<tr>
+<td><code>PublishConfirmation</code></td>
+<td>Markdown exported</td>
+<td>Confirm publish (+ optional HTML)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="checkpoint-resume">Checkpoint + resume</h3>
+<ol>
+<li>MAF <code>CheckpointManager</code> saves state after each workflow step.</li>
+<li>Pending HITL <code>RequestInfoEvent</code> objects are persisted in <code>ReviewRequest</code>.</li>
+<li>On app restart, workflow resumes from checkpoint; pending requests are re-emitted.</li>
+<li>Human submits response via UI → <code>HitlService.RespondAsync()</code> → workflow continues.</li>
+</ol>
+<h3 id="agent-control">Agent control</h3>
+<ul>
+<li>Each <code>PublishingRun</code> has a <code>CancellationTokenSource</code></li>
+<li><strong>Stop</strong> — cancel token, save checkpoint at current step</li>
+<li><strong>Pause</strong> — cancel token without completing step; resume from checkpoint</li>
+<li><strong>Start</strong> — create new run or resume from checkpoint</li>
+</ul>
+<hr />
+<h2 id="agent-memory-design">6. Agent Memory Design</h2>
+<pre class="mermaid">flowchart LR
+    subgraph Input
+        Topic
+        Category
+        AgentName
+    end
+
+    subgraph MemoryService
+        Retrieve["RetrieveContextAsync()"]
+        Store["StoreAsync()"]
+        Distill["DistillFromFeedbackAsync()"]
+        Reflect["ReflectOnPublishAsync()"]
+    end
+
+    subgraph Storage
+        Episodic[(Episodic SQLite)]
+        Semantic[(Semantic + Embeddings)]
+        Procedural[(Procedural SQLite)]
+    end
+
+    Input --> Retrieve
+    Retrieve --> Episodic
+    Retrieve --> Semantic
+    Retrieve --> Procedural
+    Store --> Episodic
+    Distill --> Semantic
+    Reflect --> Semantic
+    Reflect --> Procedural
+</pre>
+<h3 id="memory-injection">Memory injection</h3>
+<p>Before each agent invocation, <code>MemoryService</code> builds a context block:</p>
+<pre><code>## Relevant past experience
+- [Programming/Writer] Readers responded well to step-by-step code examples with expected output.
+- [GameDev/Research] Official Unity docs are more reliable than forum posts for API details.
+- [Editor] Previous article on ECS was rejected for lacking a comparison table — include one.
+</code></pre>
+<h3 id="post-publish-reflection">Post-publish reflection</h3>
+<p>The <strong>Reflection Agent</strong> runs once after publish:</p>
+<ul>
+<li>Input: final draft, all human feedback, research materials used</li>
+<li>Output: 3–5 distilled lessons stored as semantic memory with embeddings</li>
+</ul>
+<hr />
+<h2 id="mdweb-integration">7. MDWeb Integration</h2>
+<pre class="mermaid">sequenceDiagram
+    participant UI as Blazor UI
+    participant Pub as PublishingService
+    participant FS as File System
+    participant MDW as MdWebPublisher
+    participant Gen as ISiteGenerator
+
+    UI->>Pub: PublishArticle(exportHtml: true)
+    Pub->>FS: Write article.md to articles/{id}/
+    Pub->>MDW: GenerateHtmlAsync(sourceDir, outputDir, theme)
+    MDW->>Gen: GenerateAsync(config)
+    Gen-->>MDW: GenerationResult
+    MDW-->>Pub: Html output path
+    Pub-->>UI: Publish result with paths
+</pre>
+<h3 id="configuration-options">Configuration options</h3>
+<table class="table">
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MdWeb.ProjectPath</code></td>
+<td><code>../MDWeb</code></td>
+<td>MDWeb repo root</td>
+</tr>
+<tr>
+<td><code>MdWeb.DefaultTheme</code></td>
+<td><code>themes/default</code></td>
+<td>Documentation site theme</td>
+</tr>
+<tr>
+<td><code>MdWeb.WeChatTheme</code></td>
+<td><code>themes/wechat</code></td>
+<td>WeChat article theme</td>
+</tr>
+<tr>
+<td><code>MdWeb.OutputBasePath</code></td>
+<td><code>./exports</code></td>
+<td>HTML output directory</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="real-time-observability">8. Real-time Observability</h2>
+<h3 id="signalr-events">SignalR events</h3>
+<table class="table">
+<thead>
+<tr>
+<th>Event</th>
+<th>Payload</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ActivityLogged</code></td>
+<td><code>AgentActivity</code></td>
+</tr>
+<tr>
+<td><code>AgentStatusChanged</code></td>
+<td>agent name, status, current task</td>
+</tr>
+<tr>
+<td><code>WorkflowStepChanged</code></td>
+<td>run id, new step</td>
+</tr>
+<tr>
+<td><code>ReviewRequested</code></td>
+<td><code>ReviewRequest</code></td>
+</tr>
+<tr>
+<td><code>RunCompleted</code></td>
+<td>run id, success/failure</td>
+</tr>
+</tbody>
+</table>
+<h3 id="activity-types-logged">Activity types logged</h3>
+<ul>
+<li><code>AgentStarted</code>, <code>AgentCompleted</code>, <code>AgentError</code></li>
+<li><code>ToolInvoked</code> (with tool name and args summary)</li>
+<li><code>UrlFetched</code> (with URL and status code)</li>
+<li><code>LlmCall</code> (token count, duration — no prompt content in feed by default)</li>
+<li><code>MemoryRetrieved</code>, <code>MemoryStored</code></li>
+<li><code>HitlGateReached</code>, <code>HitlResolved</code></li>
+</ul>
+<hr />
+<h2 id="configuration">9. Configuration</h2>
+<pre><code class="language-json">{
+  &quot;LocalLlm&quot;: {
+    &quot;BaseUrl&quot;: &quot;http://localhost:9931/v1&quot;,
+    &quot;Model&quot;: &quot;local-model&quot;,
+    &quot;EmbeddingModel&quot;: &quot;local-model&quot;,
+    &quot;MaxTokens&quot;: 4096,
+    &quot;Temperature&quot;: 0.7
+  },
+  &quot;MdWeb&quot;: {
+    &quot;ProjectPath&quot;: &quot;../MDWeb&quot;,
+    &quot;DefaultTheme&quot;: &quot;themes/default&quot;,
+    &quot;WeChatTheme&quot;: &quot;themes/wechat&quot;,
+    &quot;OutputBasePath&quot;: &quot;./exports&quot;
+  },
+  &quot;Publishing&quot;: {
+    &quot;MaxRevisionLoops&quot;: 3,
+    &quot;ArticlesPath&quot;: &quot;./articles&quot;,
+    &quot;UrlFetchTimeoutSeconds&quot;: 30,
+    &quot;UrlAllowlist&quot;: []
+  },
+  &quot;Database&quot;: {
+    &quot;ConnectionString&quot;: &quot;Data Source=./data/lightbooks.db&quot;
+  }
+}
+</code></pre>
+<hr />
+<h2 id="security-notes">10. Security Notes</h2>
+<ul>
+<li>Local-only application; no authentication required for MVP</li>
+<li>URL fetch respects optional domain allowlist</li>
+<li>LLM prompts may contain article content — keep database local</li>
+<li>No secrets in repository; <code>appsettings.Development.json</code> for local overrides</li>
+</ul>
+</div>
+          <footer class="doc-footer">
+            <p><a href="index.html">← Documentation overview</a></p>
+          </footer>
+        </article>
+
+        
+                <aside class="toc" aria-label="On this page">
+                  <p class="toc-title">On this page</p>
+                  <ul>
+                    
+                        <li class="toc-h1">
+                          <a href="#lightbooksagent-system-design">LightBooksAgent — System Design</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#1-architecture-overview">1. Architecture Overview</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#2-solution-structure">2. Solution Structure</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#3-layer-responsibilities">3. Layer Responsibilities</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#31-lightbooksagentcore">3.1 LightBooksAgent.Core</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#32-lightbooksagentapplication">3.2 LightBooksAgent.Application</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#33-lightbooksagentagents">3.3 LightBooksAgent.Agents</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#34-lightbooksagentworkflows">3.4 LightBooksAgent.Workflows</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#35-lightbooksagentinfrastructure">3.5 LightBooksAgent.Infrastructure</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#36-lightbooksagentweb">3.6 LightBooksAgent.Web</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#4-data-model">4. Data Model</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#5-maf-workflow-hitl-design">5. MAF Workflow + HITL Design</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#hitl-gate-types">HITL gate types</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#checkpoint-resume">Checkpoint + resume</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#agent-control">Agent control</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#6-agent-memory-design">6. Agent Memory Design</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#memory-injection">Memory injection</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#post-publish-reflection">Post-publish reflection</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#7-mdweb-integration">7. MDWeb Integration</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#configuration-options">Configuration options</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#8-real-time-observability">8. Real-time Observability</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#signalr-events">SignalR events</a>
+                        </li>
+                        
+                        <li class="toc-h3">
+                          <a href="#activity-types-logged">Activity types logged</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#9-configuration">9. Configuration</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#10-security-notes">10. Security Notes</a>
+                        </li>
+                        
+                  </ul>
+                </aside>
+                
+      </main>
+    </div>
+  </div>
+  <script src="assets/vendor/mermaid.min.js"></script>
+  <script src="assets/vendor/highlight.min.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

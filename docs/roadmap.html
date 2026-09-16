@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Development Roadmap · LightBooksAgent Documentation</title>
+  <meta name="description" content="LightBooksAgent project documentation">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/vendor/atom-one-dark.min.css">
+</head>
+<body>
+  <div class="site">
+    <header class="topbar">
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle navigation">☰</button>
+      <a href="index.html" class="brand">LightBooksAgent Documentation</a>
+      <div class="search-wrap">
+        <input type="search" id="search" placeholder="Search docs…" autocomplete="off">
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar" id="sidebar">
+        <nav class="nav" aria-label="Documentation">
+          <ul class="nav-list">
+            
+                        <li class="nav-item depth-0">
+                          
+                            <a href="plan.html" class="nav-link">Project Plan</a>
+                            
+                        </li>
+                        
+                        <li class="nav-item depth-0">
+                          
+                            <a href="system-design.html" class="nav-link">System Design</a>
+                            
+                        </li>
+                        
+                        <li class="nav-item depth-0 is-active">
+                          
+                            <a href="roadmap.html" class="nav-link">Development Roadmap</a>
+                            
+                        </li>
+                        
+          </ul>
+        </nav>
+      </aside>
+
+      <main class="content">
+        <article class="doc">
+          <header class="doc-header">
+            <h1>Development Roadmap</h1>
+          </header>
+          <div class="doc-body"><h1 id="lightbooksagent-development-roadmap">LightBooksAgent — Development Roadmap</h1>
+<h2 id="phase-0-foundation-week-12">Phase 0 — Foundation (Week 1–2)</h2>
+<p><strong>Goal</strong>: Solution skeleton, local LLM connectivity, basic Blazor shell.</p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Solution structure with layered projects</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Documentation (plan, system design, roadmap)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Domain entities and interfaces in Core</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> EF Core + SQLite setup with initial migration</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Local LLM client wired to <code>http://localhost:9931/v1</code> with health check</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Basic Blazor layout, navigation, placeholder pages</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Single &quot;hello agent&quot; proof-of-concept calling local LLM</li>
+</ul>
+<p><strong>Deliverable</strong>: App starts, calls local LLM, shows response in a test page.</p>
+<hr />
+<h2 id="phase-1-workflow-core-week-34">Phase 1 — Workflow Core (Week 3–4)</h2>
+<p><strong>Goal</strong>: MAF workflow shell with HITL gates and checkpoints.</p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> MAF sequential publishing workflow definition (<code>PublishingWorkflowFactory</code>)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> HITL RequestPort executors for each gate type (<code>HitlGateFactory</code> prepare/port/apply pattern)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Checkpoint manager (JSON file store + SQLite run metadata via <code>WorkflowCheckpointService</code>)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Workflow host with event pump, resume, and HITL response submission (<code>PublishingWorkflowHost</code>)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Strategy-pattern step handlers with dispatcher (<code>IPublishingStepHandler</code> / <code>PublishingStepDispatcher</code>)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" checked="checked" /> Comprehensive workflow unit tests (79 tests in <code>LightBooksAgent.Workflows.Tests</code>)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> <code>HitlService</code> — create/resolve review requests (wired in event processor; UI integration pending)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Article project CRUD</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Workflow timeline UI (static stepper component)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Human topic proposal UI (steps 2–3)</li>
+</ul>
+<p><strong>Deliverable</strong>: Create article → propose topic → confirm → workflow pauses at research gate.</p>
+<hr />
+<h2 id="phase-2-research-agent-activity-week-56">Phase 2 — Research Agent + Activity (Week 5–6)</h2>
+<p><strong>Goal</strong>: Research pipeline with full observability.</p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Research Agent with URL fetch tool</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Research brief generation and storage</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Research approval HITL gate</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Activity logging middleware on all agents</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> SignalR <code>ActivityHub</code> for real-time feed</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Agent Monitor page (status cards, URL table)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Research materials UI in Article Workspace</li>
+</ul>
+<p><strong>Deliverable</strong>: End-to-end: confirm topic → research → human approves research brief.</p>
+<hr />
+<h2 id="phase-3-memory-system-week-7">Phase 3 — Memory System (Week 7)</h2>
+<p><strong>Goal</strong>: Agents learn from past experience.</p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> <code>MemoryService</code> with episodic, semantic, procedural layers</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Local embedding generation via llama.cpp <code>/v1/embeddings</code></li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> <code>QueryMemory</code> and <code>SaveObservation</code> agent tools</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Memory context injection before agent runs</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Post-feedback memory distillation</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Memory Explorer UI page</li>
+</ul>
+<p><strong>Deliverable</strong>: Second article run retrieves lessons from first article's feedback.</p>
+<hr />
+<h2 id="phase-4-writing-pipeline-week-810">Phase 4 — Writing Pipeline (Week 8–10)</h2>
+<p><strong>Goal</strong>: Full draft generation with auto-review and human gates.</p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Outline Architect Agent</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Writer Agent (section-by-section, category prompts)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Technical Reviewer Agent</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Editor Agent</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Draft version history</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Outline and draft review UI with diff view</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Revision loop with configurable max iterations</li>
+</ul>
+<p><strong>Deliverable</strong>: Full draft pipeline from outline through human draft review.</p>
+<hr />
+<h2 id="phase-5-publish-mdweb-week-11">Phase 5 — Publish + MDWeb (Week 11)</h2>
+<p><strong>Goal</strong>: Export artifacts and optional HTML generation.</p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Publisher — Markdown export with YAML frontmatter</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> MDWeb integration via <code>ISiteGenerator</code></li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Optional HTML export (default + WeChat themes)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Publish confirmation HITL gate</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Reflection Agent for post-publish memory update</li>
+</ul>
+<p><strong>Deliverable</strong>: Publish Markdown article and optionally generate HTML site.</p>
+<hr />
+<h2 id="phase-6-control-polish-week-1213">Phase 6 — Control &amp; Polish (Week 12–13)</h2>
+<p><strong>Goal</strong>: Production-ready local publishing platform.</p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Agent start/stop/pause controls</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Error recovery and retry from checkpoint</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Run history and archived articles</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Settings page (LLM, MDWeb, revision limits, URL allowlist)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Dashboard with summary metrics</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Integration tests for workflow state transitions</li>
+</ul>
+<p><strong>Deliverable</strong>: Stable, observable, resumable publishing platform.</p>
+<hr />
+<h2 id="phase-7-learning-extensions-optional">Phase 7 — Learning Extensions (Optional)</h2>
+<ul class="contains-task-list">
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Category-specific fine-tuned prompt libraries</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Concurrent URL research (MAF concurrent workflow)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Handoff workflow for complex revision routing</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Local knowledge base (upload reference docs, embed, search)</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Article series / multi-part publishing</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Export activity logs and memory reports</li>
+</ul>
+<hr />
+<h2 id="learning-milestones">Learning Milestones</h2>
+<table class="table">
+<thead>
+<tr>
+<th>Phase</th>
+<th>MAF concepts learned</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Single agent, OpenAI-compatible local client</td>
+</tr>
+<tr>
+<td>1</td>
+<td>Sequential workflows, HITL RequestPort, checkpoints</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Agent tools, middleware, structured output</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Context providers, memory patterns</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Multi-agent pipeline, agent specialization</td>
+</tr>
+<tr>
+<td>5</td>
+<td>External tool integration (MDWeb), post-workflow executors</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Operational control, error handling, persistence</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="current-status">Current Status</h2>
+<p><strong>Phase 1 in progress</strong> — MAF sequential workflow with RequestPort HITL gates, conditional edge routing, JSON checkpointing, and 81 passing unit tests. Next: HITL UI integration, workflow timeline, SignalR activity streaming.</p>
+</div>
+          <footer class="doc-footer">
+            <p><a href="index.html">← Documentation overview</a></p>
+          </footer>
+        </article>
+
+        
+                <aside class="toc" aria-label="On this page">
+                  <p class="toc-title">On this page</p>
+                  <ul>
+                    
+                        <li class="toc-h1">
+                          <a href="#lightbooksagent-development-roadmap">LightBooksAgent — Development Roadmap</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#phase-0-foundation-week-12">Phase 0 — Foundation (Week 1–2)</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#phase-1-workflow-core-week-34">Phase 1 — Workflow Core (Week 3–4)</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#phase-2-research-agent-activity-week-56">Phase 2 — Research Agent + Activity (Week 5–6)</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#phase-3-memory-system-week-7">Phase 3 — Memory System (Week 7)</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#phase-4-writing-pipeline-week-810">Phase 4 — Writing Pipeline (Week 8–10)</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#phase-5-publish-mdweb-week-11">Phase 5 — Publish + MDWeb (Week 11)</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#phase-6-control-polish-week-1213">Phase 6 — Control & Polish (Week 12–13)</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#phase-7-learning-extensions-optional">Phase 7 — Learning Extensions (Optional)</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#learning-milestones">Learning Milestones</a>
+                        </li>
+                        
+                        <li class="toc-h2">
+                          <a href="#current-status">Current Status</a>
+                        </li>
+                        
+                  </ul>
+                </aside>
+                
+      </main>
+    </div>
+  </div>
+  <script src="assets/vendor/mermaid.min.js"></script>
+  <script src="assets/vendor/highlight.min.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

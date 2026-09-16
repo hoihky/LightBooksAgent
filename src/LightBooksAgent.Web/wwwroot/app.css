@@ -1,0 +1,155 @@
+:root {
+    color-scheme: light dark;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    line-height: 1.5;
+}
+
+body {
+    margin: 0;
+    background: #0f1419;
+    color: #e7ecf3;
+}
+
+a {
+    color: #7cb8ff;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.app-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #2a3441;
+    background: #151b23;
+}
+
+.app-header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+.tagline {
+    margin: 0.25rem 0 0;
+    color: #9aa7b8;
+    font-size: 0.9rem;
+}
+
+.app-body {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    flex: 1;
+}
+
+.app-sidebar {
+    padding: 1rem;
+    border-right: 1px solid #2a3441;
+    background: #121820;
+}
+
+.app-content {
+    padding: 1.5rem;
+}
+
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.panel {
+    background: #151b23;
+    border: 1px solid #2a3441;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+}
+
+input,
+textarea,
+select,
+button {
+    font: inherit;
+}
+
+input,
+textarea,
+select {
+    padding: 0.5rem 0.65rem;
+    border-radius: 6px;
+    border: 1px solid #3a4655;
+    background: #0f1419;
+    color: inherit;
+}
+
+button {
+    padding: 0.5rem 0.9rem;
+    border-radius: 6px;
+    border: 1px solid #3a6ea5;
+    background: #245d9a;
+    color: white;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    border-bottom: 1px solid #2a3441;
+    padding: 0.6rem 0.4rem;
+    text-align: left;
+}
+
+.activity-list,
+.memory-list {
+    padding-left: 1.2rem;
+}
+
+.status-ok {
+    color: #6dd58c;
+}
+
+.status-error {
+    color: #ff8f8f;
+}
+
+pre {
+    white-space: pre-wrap;
+    background: #0f1419;
+    padding: 0.75rem;
+    border-radius: 6px;
+    overflow-x: auto;
+}
+
+#blazor-error-ui {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.75rem 1rem;
+    background: #5b1f1f;
+    color: white;
+}

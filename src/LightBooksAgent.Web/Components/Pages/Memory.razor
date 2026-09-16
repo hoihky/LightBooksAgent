@@ -1,0 +1,25 @@
+@page "/memory"
+@using LightBooksAgent.Core.Interfaces
+@inject IMemoryService MemoryService
+@rendermode InteractiveServer
+
+<PageTitle>Memory Explorer</PageTitle>
+
+<h2>Agent Memory Explorer</h2>
+<p>Lessons distilled from past articles and human feedback.</p>
+
+<ul class="memory-list">
+    @foreach (var memory in _memories)
+    {
+        <li>@memory</li>
+    }
+</ul>
+
+@code {
+    private IReadOnlyList<string> _memories = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _memories = await MemoryService.GetRecentMemoriesAsync(limit: 100);
+    }
+}

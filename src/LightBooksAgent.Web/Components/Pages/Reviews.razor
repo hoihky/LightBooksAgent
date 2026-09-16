@@ -1,0 +1,77 @@
+@page "/reviews"
+@using LightBooksAgent.Core.Enums
+@using LightBooksAgent.Core.Interfaces
+@inject IHitlService HitlService
+@inject IPublishingWorkflowRunner WorkflowRunner
+@inject IMemoryService MemoryService
+@rendermode InteractiveServer
+
+<PageTitle>Review Queue</PageTitle>
+
+<h2>Human Review Queue</h2>
+
+@if (_pending.Count == 0)
+{
+    <p>No pending reviews.</p>
+}
+else
+{
+    @foreach (var review in _pending)
+    {
+        <section class="panel review-card">
+            <h3>@review.GateType</h3>
+            <p>Run: @review.PublishingRunId</p>
+            <pre>@review.PayloadJson</pre>
+
+            <div class="form-row">
+                <label>Comment</label>
+                <InputTextArea @bind-Value="_comments[review.Id]" />
+            </div>
+
+            <button @onclick="() => ResolveAsync(review.Id, ReviewStatus.Approved)">Approve</button>
+            <button @onclick="() => ResolveAsync(review.Id, ReviewStatus.ChangesRequested)">Request Changes</button>
+            <button @onclick="() => ResolveAsync(review.Id, ReviewStatus.Rejected)">Reject</button>
+        </section>
+    }
+}
+
+@code {
+    private IReadOnlyList<Core.Entities.ReviewRequest> _pending = [];
+    private readonly Dictionary<Guid, string> _comments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _pending = await HitlService.GetPendingAsync();
+        foreach (var review in _pending)
+        {
+            _comments.TryAdd(review.Id, string.Empty);
+        }
+    }
+
+    private async Task ResolveAsync(Guid reviewId, ReviewStatus status)
+    {
+        var review = _pending.First(r => r.Id == reviewId);
+        var comment = _comments.GetValueOrDefault(reviewId);
+
+        await HitlService.ResolveAsync(reviewId, status, comment);
+
+        if (!string.IsNullOrWhiteSpace(comment))
+        {
+            var run = await WorkflowRunner.GetRunAsync(review.PublishingRunId);
+            if (run is not null)
+            {
+                await MemoryService.DistillFromFeedbackAsync(run.ArticleProjectId, comment);
+            }
+        }
+
+        var approved = status == ReviewStatus.Approved;
+        await WorkflowRunner.AdvanceAfterReviewAsync(review.PublishingRunId, review.GateType, approved);
+
+        await ReloadAsync();
+    }
+}
