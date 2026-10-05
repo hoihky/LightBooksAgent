@@ -1,4 +1,5 @@
 using LightBooksAgent.Core.Enums;
+using LightBooksAgent.Core.Utilities;
 using LightBooksAgent.Workflows.Mapping;
 using LightBooksAgent.Workflows.Models;
 using Microsoft.Agents.AI.Workflows;
@@ -44,6 +45,13 @@ public sealed class HitlGateFactory
                 if (!response.Approved && gateType == ReviewGateType.DraftReview)
                 {
                     state.RevisionCount++;
+                }
+
+                if (gateType == ReviewGateType.UrlFetchApproval)
+                {
+                    state.ApprovedResearchUrls = ResearchUrlParser
+                        .ResolveApprovedUrls(state.ProposedResearchUrls, response.Approved, response.Comment)
+                        .ToList();
                 }
 
                 return state;

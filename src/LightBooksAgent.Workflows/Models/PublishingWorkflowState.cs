@@ -30,6 +30,10 @@ public sealed class PublishingWorkflowState
 
     public bool IsCompleted { get; set; }
 
+    public List<string> ProposedResearchUrls { get; set; } = [];
+
+    public List<string> ApprovedResearchUrls { get; set; } = [];
+
     public static PublishingWorkflowState CreateStart(Guid publishingRunId, Guid articleProjectId) =>
         new()
         {

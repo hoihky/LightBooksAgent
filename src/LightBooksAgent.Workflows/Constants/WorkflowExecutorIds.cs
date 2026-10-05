@@ -3,6 +3,8 @@ namespace LightBooksAgent.Workflows.Constants;
 public static class WorkflowExecutorIds
 {
     public const string Initialize = "initialize";
+    public const string ResearchUrlProposal = "research-url-proposal";
+    public const string ResearchUrlGate = "research-url-gate";
     public const string Research = "research";
     public const string ResearchGate = "research-gate";
     public const string Outline = "outline";

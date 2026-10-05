@@ -13,6 +13,7 @@ public class PublishingWorkflowFactoryTests
     {
         var handlers = new IPublishingStepHandler[]
         {
+            new StubStepHandler(PublishingStep.ResearchUrlProposing),
             new StubStepHandler(PublishingStep.Researching),
             new StubStepHandler(PublishingStep.Outlining),
             new StubStepHandler(PublishingStep.Writing),

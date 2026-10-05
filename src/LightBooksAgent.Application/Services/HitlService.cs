@@ -88,6 +88,7 @@ public sealed class HitlService(AppDbContext db, IActivityLogger activityLogger)
         ReviewGateType.DraftReview => PublishingStep.HumanDraftReview,
         ReviewGateType.FinalApproval => PublishingStep.FinalApproval,
         ReviewGateType.PublishConfirmation => PublishingStep.Publishing,
+        ReviewGateType.UrlFetchApproval => PublishingStep.ResearchUrlApproval,
         _ => PublishingStep.ProjectCreated
     };
 }

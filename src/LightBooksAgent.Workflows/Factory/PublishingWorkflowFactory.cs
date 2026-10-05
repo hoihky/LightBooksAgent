@@ -1,4 +1,5 @@
 using LightBooksAgent.Core.Enums;
+using LightBooksAgent.Core.Utilities;
 using LightBooksAgent.Workflows.Abstractions;
 using LightBooksAgent.Workflows.Constants;
 using LightBooksAgent.Workflows.Executors;
@@ -14,6 +15,9 @@ public sealed class PublishingWorkflowFactory(
     public Workflow CreateWorkflow()
     {
         var initialize = stepFactory.CreateInitializer();
+        var researchUrlProposal = stepFactory.Create(
+            WorkflowExecutorIds.ResearchUrlProposal,
+            PublishingStep.ResearchUrlProposing);
         var research = stepFactory.Create(WorkflowExecutorIds.Research, PublishingStep.Researching);
         var outline = stepFactory.Create(WorkflowExecutorIds.Outline, PublishingStep.Outlining);
         var writing = stepFactory.Create(WorkflowExecutorIds.Writing, PublishingStep.Writing);
@@ -21,6 +25,14 @@ public sealed class PublishingWorkflowFactory(
         var editorial = stepFactory.Create(WorkflowExecutorIds.Editorial, PublishingStep.EditorialReview);
         var publish = stepFactory.Create(WorkflowExecutorIds.Publish, PublishingStep.Publishing);
         var complete = stepFactory.CreateCompletionExecutor();
+
+        var urlFetchGate = BuildGate(
+            ReviewGateType.UrlFetchApproval,
+            state => CreateReviewRequest(
+                ReviewGateType.UrlFetchApproval,
+                state,
+                "Approve URLs to fetch before research",
+                ResearchUrlParser.FormatForHumanReview(state.ProposedResearchUrls)));
 
         var researchGate = BuildGate(
             ReviewGateType.ResearchApproval,
@@ -45,7 +57,12 @@ public sealed class PublishingWorkflowFactory(
         return new WorkflowBuilder(initialize)
             .WithName("LightBooks Publishing Workflow")
             .WithDescription("Sequential MAF workflow with RequestPort HITL gates")
-            .AddEdge(initialize, research)
+            .AddEdge(initialize, researchUrlProposal)
+            .AddEdge(researchUrlProposal, urlFetchGate.Prepare)
+            .AddEdge(urlFetchGate.Prepare, urlFetchGate.Port)
+            .AddEdge(urlFetchGate.Port, urlFetchGate.Apply)
+            .AddEdge<PublishingWorkflowState>(urlFetchGate.Apply, research, static state => state.LastReviewApproved)
+            .AddEdge<PublishingWorkflowState>(urlFetchGate.Apply, researchUrlProposal, static state => !state.LastReviewApproved)
             .AddEdge(research, researchGate.Prepare)
             .AddEdge(researchGate.Prepare, researchGate.Port)
             .AddEdge(researchGate.Port, researchGate.Apply)

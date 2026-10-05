@@ -25,6 +25,7 @@ public static class DependencyInjection
         services.AddScoped<IWorkflowEventProcessor, WorkflowEventProcessor>();
         services.AddScoped<IPublishingStepDispatcher, PublishingStepDispatcher>();
 
+        services.AddScoped<IPublishingStepHandler, ResearchUrlProposalStepHandler>();
         services.AddScoped<IPublishingStepHandler, ResearchStepHandler>();
         services.AddScoped<IPublishingStepHandler, OutlineStepHandler>();
         services.AddScoped<IPublishingStepHandler, WritingStepHandler>();

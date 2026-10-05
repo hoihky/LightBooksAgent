@@ -21,5 +21,7 @@ public enum PublishingStep
     HtmlExport = 16,
     MemoryUpdate = 17,
     Published = 18,
+    ResearchUrlProposing = 19,
+    ResearchUrlApproval = 20,
     Failed = 99
 }

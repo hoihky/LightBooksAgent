@@ -7,9 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace LightBooksAgent.Workflows.Steps;
 
-public sealed class ResearchStepHandler(IServiceScopeFactory scopeFactory) : IPublishingStepHandler
+public sealed class ResearchUrlProposalStepHandler(IServiceScopeFactory scopeFactory) : IPublishingStepHandler
 {
-    public PublishingStep Step => PublishingStep.Researching;
+    public PublishingStep Step => PublishingStep.ResearchUrlProposing;
 
     public async Task<PublishingWorkflowState> ExecuteAsync(
         PublishingWorkflowState state,
@@ -22,18 +22,14 @@ public sealed class ResearchStepHandler(IServiceScopeFactory scopeFactory) : IPu
         var project = await db.ArticleProjects.FindAsync([state.ArticleProjectId], cancellationToken)
             ?? throw new InvalidOperationException($"Article {state.ArticleProjectId} not found.");
 
-        var brief = await agentRunner.RunResearchAsync(
+        var proposed = await agentRunner.ProposeResearchTargetUrlsAsync(
             state.PublishingRunId,
-            project.Category,
-            project.ConfirmedTopic!,
             project.SeedKeywords,
-            state.ApprovedResearchUrls,
             cancellationToken);
 
-        project.ResearchBrief = brief;
-        project.UpdatedAt = DateTimeOffset.UtcNow;
-        state.ResearchBrief = brief;
-        await db.SaveChangesAsync(cancellationToken);
+        state.ProposedResearchUrls = proposed.ToList();
+        state.ApprovedResearchUrls = [];
+        state.CurrentStep = PublishingStep.ResearchUrlApproval;
         return state;
     }
 }

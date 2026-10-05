@@ -31,6 +31,6 @@ public class DependencyInjectionTests
             .Where(d => d.ServiceType == typeof(IPublishingStepHandler))
             .ToList();
 
-        Assert.Equal(7, handlerRegistrations.Count);
+        Assert.Equal(8, handlerRegistrations.Count);
     }
 }

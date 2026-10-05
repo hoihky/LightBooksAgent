@@ -11,11 +11,13 @@ public static class ReviewGateMapper
         ReviewGateType.DraftReview => PublishingStep.HumanDraftReview,
         ReviewGateType.FinalApproval => PublishingStep.FinalApproval,
         ReviewGateType.PublishConfirmation => PublishingStep.Publishing,
+        ReviewGateType.UrlFetchApproval => PublishingStep.ResearchUrlApproval,
         _ => PublishingStep.ProjectCreated
     };
 
     public static PublishingStep ToNextStepAfterApproval(ReviewGateType gateType) => gateType switch
     {
+        ReviewGateType.UrlFetchApproval => PublishingStep.Researching,
         ReviewGateType.ResearchApproval => PublishingStep.Outlining,
         ReviewGateType.OutlineApproval => PublishingStep.Writing,
         ReviewGateType.DraftReview => PublishingStep.FinalApproval,
@@ -26,6 +28,7 @@ public static class ReviewGateMapper
 
     public static PublishingStep ToRetryStep(ReviewGateType gateType) => gateType switch
     {
+        ReviewGateType.UrlFetchApproval => PublishingStep.ResearchUrlProposing,
         ReviewGateType.ResearchApproval => PublishingStep.Researching,
         ReviewGateType.OutlineApproval => PublishingStep.Outlining,
         ReviewGateType.DraftReview => PublishingStep.Revision,

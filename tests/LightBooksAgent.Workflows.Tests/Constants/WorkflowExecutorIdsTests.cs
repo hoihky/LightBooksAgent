@@ -24,6 +24,8 @@ public class WorkflowExecutorIdsTests
         var ids = new[]
         {
             WorkflowExecutorIds.Initialize,
+            WorkflowExecutorIds.ResearchUrlProposal,
+            WorkflowExecutorIds.ResearchUrlGate,
             WorkflowExecutorIds.Research,
             WorkflowExecutorIds.ResearchGate,
             WorkflowExecutorIds.Outline,

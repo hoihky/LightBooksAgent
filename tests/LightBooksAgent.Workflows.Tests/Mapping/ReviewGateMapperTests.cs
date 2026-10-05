@@ -11,10 +11,12 @@ public class ReviewGateMapperTests
     [InlineData(ReviewGateType.DraftReview, PublishingStep.HumanDraftReview)]
     [InlineData(ReviewGateType.FinalApproval, PublishingStep.FinalApproval)]
     [InlineData(ReviewGateType.PublishConfirmation, PublishingStep.Publishing)]
+    [InlineData(ReviewGateType.UrlFetchApproval, PublishingStep.ResearchUrlApproval)]
     public void ToPublishingStep_MapsKnownGates(ReviewGateType gate, PublishingStep expected) =>
         Assert.Equal(expected, ReviewGateMapper.ToPublishingStep(gate));
 
     [Theory]
+    [InlineData(ReviewGateType.UrlFetchApproval, PublishingStep.Researching)]
     [InlineData(ReviewGateType.ResearchApproval, PublishingStep.Outlining)]
     [InlineData(ReviewGateType.OutlineApproval, PublishingStep.Writing)]
     [InlineData(ReviewGateType.DraftReview, PublishingStep.FinalApproval)]
@@ -24,6 +26,7 @@ public class ReviewGateMapperTests
         Assert.Equal(expected, ReviewGateMapper.ToNextStepAfterApproval(gate));
 
     [Theory]
+    [InlineData(ReviewGateType.UrlFetchApproval, PublishingStep.ResearchUrlProposing)]
     [InlineData(ReviewGateType.ResearchApproval, PublishingStep.Researching)]
     [InlineData(ReviewGateType.OutlineApproval, PublishingStep.Outlining)]
     [InlineData(ReviewGateType.DraftReview, PublishingStep.Revision)]

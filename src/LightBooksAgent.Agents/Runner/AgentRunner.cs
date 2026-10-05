@@ -3,6 +3,7 @@ using LightBooksAgent.Core.Constants;
 using LightBooksAgent.Core.Enums;
 using LightBooksAgent.Core.Interfaces;
 using LightBooksAgent.Core.Models;
+using LightBooksAgent.Core.Utilities;
 
 namespace LightBooksAgent.Agents.Runner;
 
@@ -12,12 +13,18 @@ public sealed class AgentRunner(
     IUrlFetcher urlFetcher,
     IActivityLogger activityLogger)
 {
+    public Task<IReadOnlyList<string>> ProposeResearchTargetUrlsAsync(
+        Guid runId,
+        string seedKeywords,
+        CancellationToken cancellationToken = default) =>
+        ProposeResearchTargetUrlsInternalAsync(runId, seedKeywords, cancellationToken);
+
     public async Task<string> RunResearchAsync(
         Guid runId,
         ArticleCategory category,
         string topic,
         string seedKeywords,
-        IReadOnlyList<string> seedUrls,
+        IReadOnlyList<string> approvedUrls,
         CancellationToken cancellationToken = default)
     {
         await LogStart(runId, AgentNames.Research, "Researching topic", cancellationToken);
@@ -29,7 +36,7 @@ public sealed class AgentRunner(
             cancellationToken);
 
         var sourceSummaries = new List<string>();
-        foreach (var url in seedUrls.Where(u => !string.IsNullOrWhiteSpace(u)))
+        foreach (var url in approvedUrls.Where(u => !string.IsNullOrWhiteSpace(u)))
         {
             var fetch = await urlFetcher.FetchAsync(url, cancellationToken);
             await activityLogger.LogAsync(
@@ -72,6 +79,26 @@ public sealed class AgentRunner(
 
         await LogComplete(runId, AgentNames.Research, "Research brief created", cancellationToken);
         return result;
+    }
+
+    private async Task<IReadOnlyList<string>> ProposeResearchTargetUrlsInternalAsync(
+        Guid runId,
+        string seedKeywords,
+        CancellationToken cancellationToken)
+    {
+        await LogStart(runId, AgentNames.Research, "Proposing research target URLs", cancellationToken);
+
+        var urls = ResearchUrlParser.ParseFromSeedKeywords(seedKeywords);
+        await activityLogger.LogAsync(
+            runId,
+            AgentNames.Research,
+            ActivityType.AgentCompleted,
+            urls.Count == 0
+                ? "No target URLs found in seed keywords; awaiting human approval to continue"
+                : $"Proposed {urls.Count} target URL(s) for human approval before fetching",
+            cancellationToken: cancellationToken);
+
+        return urls;
     }
 
     public async Task<string> RunOutlineAsync(

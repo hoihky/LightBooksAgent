@@ -190,6 +190,7 @@ public class MafPublishingWorkflowRunnerTests
 
         var handlers = new IPublishingStepHandler[]
         {
+            new StubStepHandler(PublishingStep.ResearchUrlProposing, s => { s.ProposedResearchUrls = ["https://example.com"]; return s; }),
             new StubStepHandler(PublishingStep.Researching, s => { s.ResearchBrief = "brief"; return s; }),
             new StubStepHandler(PublishingStep.Outlining, s => { s.OutlineMarkdown = "# Outline"; return s; }),
             new StubStepHandler(PublishingStep.Writing, s => { s.LatestDraft = "draft"; return s; }),

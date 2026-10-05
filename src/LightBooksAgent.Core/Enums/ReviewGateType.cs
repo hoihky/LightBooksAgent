@@ -7,5 +7,6 @@ public enum ReviewGateType
     OutlineApproval = 2,
     DraftReview = 3,
     FinalApproval = 4,
-    PublishConfirmation = 5
+    PublishConfirmation = 5,
+    UrlFetchApproval = 6
 }
